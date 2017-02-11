@@ -1,0 +1,21 @@
+{
+    "name": "deseco/repository",
+    "description": "Easy repositories for laravel.",
+    "keywords": ["repositories","pattern","laravel"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Andrzej Żmudziński",
+            "email": "jendrusha@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.9",
+        "illuminate/support": "5.1.x|5.2.x|5.3.*|5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+           "Deseco\\Repositories\\": "src/"
+       }
+    }
+}
