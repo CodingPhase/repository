@@ -282,6 +282,6 @@ abstract class Repository implements RepositoryInterface
      */
     public function filter(QueryFilters $filters)
     {
-        return $filters->apply($this->model);
+        return $filters->apply($this->model->query());
     }
 }
