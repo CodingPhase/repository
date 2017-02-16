@@ -5,6 +5,7 @@ namespace Deseco\Repositories\Eloquent;
 use Deseco\Repositories\Contracts\RepositoryInterface;
 use Deseco\Repositories\Exceptions\RepositoryException;
 use Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException;
+use Deseco\Repositories\Filters\QueryFilters;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Container\Container as App;
 
@@ -57,6 +58,11 @@ abstract class Repository implements RepositoryInterface
         return $this->model->get($columns);
     }
 
+    /**
+     * @param array $columns
+     *
+     * @return mixed
+     */
     public function first($columns = ['*'])
     {
         return $this->model->first($columns);
@@ -267,5 +273,15 @@ abstract class Repository implements RepositoryInterface
         }
 
         return $this;
+    }
+
+    /**
+     * @param \Deseco\Repositories\Filters\QueryFilters $filters
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function filter(QueryFilters $filters)
+    {
+        return $filters->apply($this->model);
     }
 }

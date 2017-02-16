@@ -2,6 +2,7 @@
 
 namespace Deseco\Repositories;
 
+use Deseco\Repositories\Console\GenerateCommand;
 use Deseco\Repositories\Factories\RepositoryFactory;
 use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
 
@@ -13,6 +14,13 @@ class ServiceProvider extends LaravelServiceProvider
      * @var bool
      */
     protected $defer = false;
+
+    /**
+     * @var array
+     */
+    protected $commands = [
+        GenerateCommand::class,
+    ];
 
     /**
      * Bootstrap the application events.
@@ -34,6 +42,8 @@ class ServiceProvider extends LaravelServiceProvider
         $this->app->bind('deseco.repository', function () {
             return new RepositoryFactory($this->app, $this->app['config']);
         });
+
+        $this->commands($this->commands);
     }
 
     /**
