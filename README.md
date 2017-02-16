@@ -10,7 +10,7 @@ Inspired by [Bosnadev](https://github.com/bosnadev/repository) package.
 ### Installation
 
 ```sh
-composer require deseco/repositories
+composer require deseco/repository
 ```
 
 Add service provider into config/app.php
