@@ -2,7 +2,9 @@
 
 namespace Deseco\Repositories\Eloquent;
 
+use Deseco\Repositories\Builders\CriteriaNameBuilder;
 use Deseco\Repositories\Contracts\RepositoryInterface;
+use Deseco\Repositories\Eloquent\Criteria\Criteria;
 use Deseco\Repositories\Exceptions\RepositoryException;
 use Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException;
 use Deseco\Repositories\Filters\QueryFilters;
@@ -11,7 +13,6 @@ use Illuminate\Container\Container as App;
 
 /**
  * Class Repository
- *
  * @package Deseco\Repositories\Eloquent
  */
 abstract class Repository implements RepositoryInterface
@@ -116,7 +117,7 @@ abstract class Repository implements RepositoryInterface
      *
      * @return mixed
      */
-    public function saveModel(array $data)
+    public function save(array $data)
     {
         foreach ($data as $key => $value) {
             $this->model->$key = $value;
@@ -143,7 +144,7 @@ abstract class Repository implements RepositoryInterface
      *
      * @return bool
      */
-    public function updateRich(array $data, $id)
+    public function fillUpdate(array $data, $id)
     {
         if (!($model = $this->model->find($id))) {
             return false;
@@ -260,16 +261,27 @@ abstract class Repository implements RepositoryInterface
      */
     public function matching()
     {
-        $methods = array_flatten(func_get_args());
+        $methods = func_get_args();
+        $methods = array_depth($methods) >= 2 ? array_shift($methods) : $methods;
 
-        foreach ($methods as $method) {
-            if (! method_exists($this, $method)) {
-                throw new RepositoryMethodNotExistsException(
-                    "Class " . get_class($this) . " don't contain method {$method}."
-                );
+        $criteria = (new CriteriaNameBuilder(get_class($this)))->getNamespace();
+
+        foreach ($methods as $key => $value) {
+            $args = is_array($value) ? $value : [];
+            $method = count($args) ? $key : $value;
+
+            $object = (class_exists($criteria) && method_exists($criteria, $method)) ?
+                new $criteria($this->model) : $this;
+
+            if (! $object instanceof Criteria && ! method_exists($object, $method)) {
+                throw new RepositoryMethodNotExistsException("Method {$method} does not exists in repositories.");
             }
 
-            $this->{$method}();
+            count($args) ? call_user_func_array([$object, $method], $args) : $object->{$method}();
+
+            if ($object instanceof Criteria) {
+                $this->model =  $object->getModel();
+            }
         }
 
         return $this;

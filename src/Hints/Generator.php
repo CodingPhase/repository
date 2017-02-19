@@ -2,37 +2,43 @@
 
 namespace Deseco\Repositories\Hints;
 
-use Illuminate\Config\Repository as Config;
+use Deseco\Repositories\Builders\FactoryMethodNameBuilder;
+use Deseco\Repositories\Builders\RepositoryNameBuilder;
 use Illuminate\Filesystem\Filesystem;
 
+/**
+ * Class Generator
+ * @package Deseco\Repositories\Hints
+ */
 class Generator
 {
     /**
-     * @var array
+     * @var \Illuminate\Config\Repository
      */
     protected $config;
 
     /**
      * @var \Illuminate\Filesystem\Filesystem
      */
-    protected $files;
+    protected $filesystem;
+
+    /**
+     * @var \Illuminate\Console\Command
+     */
+    protected $command;
 
     /**
      * Generator constructor.
      *
-     * @param \Illuminate\Config\Repository $config
-     * @param \Illuminate\Filesystem\Filesystem $files
+     * @param \Illuminate\Filesystem\Filesystem $filesystem
      */
-    public function __construct(Config $config, Filesystem $files)
+    public function __construct(Filesystem $filesystem)
     {
-        $this->files = $files;
+        $this->filesystem = $filesystem;
 
-        $this->config = [
-            'namespace' => $config->get('repositories.namespace'),
-            'facade' => $config->get('repositories.facade'),
-            'suffix' => $config->get('repositories.suffix'),
-            'path' => $config->get('repositories.path'),
-        ];
+        foreach (config('repositories') as $setting => $value) {
+            $this->config[$setting] = $value;
+        }
     }
 
     /**
@@ -40,11 +46,12 @@ class Generator
      */
     public function make($filename)
     {
-        if ($this->files->exists($filename)) {
-            $this->files->delete($filename);
-        }
+        $this->command->info('Started generating hints...');
+        $this->command->info('');
 
-        $file = $this->files->get(__DIR__ . '/../../stubs/class.stub');
+        $this->deleteFileIfExists($filename);
+
+        $file = $this->filesystem->get(__DIR__ . '/../../stubs/class.stub');
 
         $data = [
             '{facade}' => $this->config['facade'],
@@ -55,7 +62,27 @@ class Generator
             $file = str_replace($string, $value, $file);
         }
 
-        $this->files->put($filename, $file);
+        $this->filesystem->put($filename, $file);
+        $this->command->info('');
+        $this->command->info('Done!');
+    }
+
+    /**
+     * @param \Illuminate\Console\Command $command
+     */
+    public function setCommand($command)
+    {
+        $this->command = $command;
+    }
+
+    /**
+     * @param $filename
+     */
+    protected function deleteFileIfExists($filename)
+    {
+        if ($this->filesystem->exists($filename)) {
+            $this->filesystem->delete($filename);
+        }
     }
 
     /**
@@ -65,12 +92,24 @@ class Generator
     {
         $methods = [];
 
-        foreach ($this->files->files(app_path($this->config['path'])) as $file) {
-            $class = $this->getClassNameFromPath($file);
-            $methods[$this->getMethodNameFromClass($class)] = $this->config['namespace'] . $class;
+        foreach ($this->globRepositories() as $repositoryPath) {
+            $repositoryNameBuilder = new RepositoryNameBuilder($repositoryPath);
+            $methods[$repositoryNameBuilder->getFactoryMethod()] = $repositoryNameBuilder->getNamespace();
+            $this->command->info("Created method {$repositoryNameBuilder->getFactoryMethod()} for repository {$repositoryNameBuilder->getNamespace()}");
         }
 
         return $methods;
+    }
+
+    /**
+     * @return array
+     */
+    protected function globRepositories()
+    {
+        $namespaceParts = explode('\\', $this->config['namespace']);
+        array_shift($namespaceParts);
+
+        return $this->filesystem->files(app_path(implode(DIRECTORY_SEPARATOR, array_filter($namespaceParts))));
     }
 
     /**
@@ -91,30 +130,5 @@ class Generator
         }
 
         return $output;
-    }
-
-    /**
-     * @param $path
-     *
-     * @return mixed
-     */
-    protected function getClassNameFromPath($path)
-    {
-        $fullPathToFile = explode('/', $path);
-        $explodedFileName = explode('.', end($fullPathToFile));
-
-        return $explodedFileName[0];
-    }
-
-    /**
-     * @param $class
-     *
-     * @return string
-     */
-    protected function getMethodNameFromClass($class)
-    {
-        $method = substr($class, 0, -strlen($this->config['suffix']));
-
-        return strtolower($method);
     }
 }

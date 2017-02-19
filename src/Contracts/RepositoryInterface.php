@@ -4,8 +4,7 @@ namespace Deseco\Repositories\Contracts;
 
 /**
  * Interface RepositoryInterface
- *
- * @package Deseco\Repositores\Contracts
+ * @package Deseco\Repositories\Contracts
  */
 interface RepositoryInterface
 {
@@ -44,7 +43,7 @@ interface RepositoryInterface
      *
      * @return bool
      */
-    public function saveModel(array $data);
+    public function save(array $data);
 
     /**
      * @param array $data

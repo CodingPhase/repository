@@ -5,6 +5,10 @@ namespace Deseco\Repositories\Console;
 use Deseco\Repositories\Hints\Generator;
 use Illuminate\Console\Command;
 
+/**
+ * Class GenerateCommand
+ * @package Deseco\Repositories\Console
+ */
 class GenerateCommand extends Command
 {
     /**
@@ -20,7 +24,12 @@ class GenerateCommand extends Command
     /**
      * @var \Deseco\Repositories\Hints\Generator
      */
-    private $generator;
+    protected $generator;
+
+    /**
+     * @var string
+     */
+    protected $filename = '_repo_hints.php';
 
     /**
      * GenerateCommand constructor.
@@ -35,10 +44,11 @@ class GenerateCommand extends Command
     }
 
     /**
-     *
+     * Generate repository hints
      */
     public function handle()
     {
-        $this->generator->make(base_path('_repo_hints.php'));
+        $this->generator->setCommand($this);
+        $this->generator->make(base_path($this->filename));
     }
 }
