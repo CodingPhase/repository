@@ -98,6 +98,12 @@ class Generator
             $this->command->info("Created method {$repositoryNameBuilder->getFactoryMethod()} for repository {$repositoryNameBuilder->getNamespace()}");
         }
 
+        foreach ($this->config['aliases'] as $method => $repository) {
+            $namespace = $this->config['namespace'] . $repository . $this->config['suffix'];
+            $methods[$method] = $namespace;
+            $this->command->info("Created method {$method} for repository {$namespace}");
+        }
+
         return $methods;
     }
 

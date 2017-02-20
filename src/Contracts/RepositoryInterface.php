@@ -93,4 +93,16 @@ interface RepositoryInterface
      * @return mixed
      */
     public function byWhere($where, $columns = ['*']);
+
+    /**
+     * @return mixed
+     */
+    public function matching();
+
+    /**
+     * @param $callable
+     *
+     * @return mixed
+     */
+    public function match($callable);
 }

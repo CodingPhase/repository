@@ -3,9 +3,12 @@
 namespace Deseco\Repositories\Eloquent;
 
 use Deseco\Repositories\Builders\CriteriaNameBuilder;
+use Deseco\Repositories\Contracts\CriteriaInterface;
 use Deseco\Repositories\Contracts\RepositoryInterface;
 use Deseco\Repositories\Eloquent\Criteria\Criteria;
 use Deseco\Repositories\Exceptions\RepositoryException;
+use Deseco\Repositories\Exceptions\RepositoryInvalidMethodException;
+use Deseco\Repositories\Exceptions\RepositoryMatchArgumentException;
 use Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException;
 use Deseco\Repositories\Filters\QueryFilters;
 use Illuminate\Database\Eloquent\Model;
@@ -15,7 +18,7 @@ use Illuminate\Container\Container as App;
  * Class Repository
  * @package Deseco\Repositories\Eloquent
  */
-abstract class Repository implements RepositoryInterface
+abstract class Repository implements RepositoryInterface, CriteriaInterface
 {
     /**
      * @var App
@@ -256,6 +259,24 @@ abstract class Repository implements RepositoryInterface
     }
 
     /**
+     * @return mixed
+     */
+    public function getModel()
+    {
+        return $this->model;
+    }
+
+    /**
+     * @param \Deseco\Repositories\Filters\QueryFilters $filters
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function filter(QueryFilters $filters)
+    {
+        return $filters->apply($this->model->query());
+    }
+
+    /**
      * @return $this
      * @throws \Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException
      */
@@ -279,21 +300,57 @@ abstract class Repository implements RepositoryInterface
 
             count($args) ? call_user_func_array([$object, $method], $args) : $object->{$method}();
 
-            if ($object instanceof Criteria) {
-                $this->model =  $object->getModel();
-            }
+            $this->model =  $object->getModel();
         }
 
         return $this;
     }
 
     /**
-     * @param \Deseco\Repositories\Filters\QueryFilters $filters
+     * @param $callable
      *
-     * @return \Illuminate\Database\Eloquent\Builder
+     * @return $this
+     * @throws \Deseco\Repositories\Exceptions\RepositoryMatchArgumentException
      */
-    public function filter(QueryFilters $filters)
+    public function match($callable)
     {
-        return $filters->apply($this->model->query());
+        if (! is_callable($callable)) {
+            throw new RepositoryMatchArgumentException("Argument is not callable.");
+        }
+
+        $this->model = $this->model->where($callable);
+
+        return $this;
+    }
+
+    /**
+     * @param $name
+     * @param $args
+     *
+     * @return $this
+     * @throws \Deseco\Repositories\Exceptions\RepositoryInvalidMethodException
+     * @throws \Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException
+     */
+    public function __call($name, $args)
+    {
+        if (strpos($name, 'match') !== 0) {
+            throw new RepositoryInvalidMethodException("Invalid method name.");
+        }
+
+        $criteria = (new CriteriaNameBuilder(get_class($this)))->getNamespace();
+        $method = strtolower(substr($name, 5));
+
+        $object = (class_exists($criteria) && method_exists($criteria, $method)) ?
+            new $criteria($this->model) : $this;
+
+        if (! $object instanceof Criteria && ! method_exists($object, $method)) {
+            throw new RepositoryMethodNotExistsException("Method {$method} does not exists in repositories.");
+        }
+
+        call_user_func_array([$object, $method], $args);
+
+        $this->model =  $object->getModel();
+
+        return $this;
     }
 }

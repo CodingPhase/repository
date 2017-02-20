@@ -2,13 +2,14 @@
 
 namespace Deseco\Repositories\Eloquent\Criteria;
 
+use Deseco\Repositories\Contracts\CriteriaInterface;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Criteria
  * @package Deseco\Repositories\Eloquent\Criteria
  */
-abstract class Criteria
+abstract class Criteria implements CriteriaInterface
 {
     /**
      * @var \Illuminate\Database\Eloquent\Model
