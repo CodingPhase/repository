@@ -70,4 +70,17 @@ abstract class QueryFilters
     {
         return $this->builder;
     }
+
+    /**
+     * Set Request Object
+     *
+     * @param $request
+     * @return $this
+     */
+    public function setRequest($request)
+    {
+        $this->request = $request;
+
+        return $this;
+    }
 }
