@@ -1,6 +1,6 @@
 <?php
 
-namespace Deseco\Repositories\Hints;
+namespace Deseco\Repositories\Generators;
 
 use Deseco\Repositories\Builders\FactoryMethodNameBuilder;
 use Deseco\Repositories\Builders\RepositoryNameBuilder;
@@ -10,7 +10,7 @@ use Illuminate\Filesystem\Filesystem;
  * Class Generator
  * @package Deseco\Repositories\Hints
  */
-class Generator
+class HintsGenerator
 {
     /**
      * @var \Illuminate\Config\Repository
@@ -51,7 +51,7 @@ class Generator
 
         $this->deleteFileIfExists($filename);
 
-        $file = $this->filesystem->get(__DIR__ . '/../../stubs/class.stub');
+        $file = $this->filesystem->get(__DIR__ . '/../../stubs/facade.stub');
 
         $data = [
             '{facade}' => $this->config['facade'],
@@ -92,16 +92,21 @@ class Generator
     {
         $methods = [];
 
-        foreach ($this->globRepositories() as $repositoryPath) {
-            $repositoryNameBuilder = new RepositoryNameBuilder($repositoryPath);
-            $methods[$repositoryNameBuilder->getFactoryMethod()] = $repositoryNameBuilder->getNamespace();
-            $this->command->info("Created method {$repositoryNameBuilder->getFactoryMethod()} for repository {$repositoryNameBuilder->getNamespace()}");
-        }
-
         foreach ($this->config['aliases'] as $method => $repository) {
             $namespace = $this->config['namespace'] . $repository . $this->config['suffix'];
             $methods[$method] = $namespace;
             $this->command->info("Created method {$method} for repository {$namespace}");
+        }
+
+        foreach ($this->globRepositories() as $repositoryPath) {
+            $repositoryNameBuilder = new RepositoryNameBuilder($repositoryPath);
+
+            if (in_array($repositoryNameBuilder->getNamespace(), $methods)) {
+                continue;
+            }
+
+            $methods[$repositoryNameBuilder->getFactoryMethod()] = $repositoryNameBuilder->getNamespace();
+            $this->command->info("Created method {$repositoryNameBuilder->getFactoryMethod()} for repository {$repositoryNameBuilder->getNamespace()}");
         }
 
         return $methods;

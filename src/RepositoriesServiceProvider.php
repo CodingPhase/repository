@@ -2,11 +2,12 @@
 
 namespace Deseco\Repositories;
 
-use Deseco\Repositories\Console\GenerateCommand;
+use Deseco\Repositories\Console\GenerateHintsCommand;
+use Deseco\Repositories\Console\GenerateRepositoryCommand;
 use Deseco\Repositories\Factories\RepositoryFactory;
-use Illuminate\Support\ServiceProvider as LaravelServiceProvider;
+use Illuminate\Support\ServiceProvider;
 
-class ServiceProvider extends LaravelServiceProvider
+class RepositoriesServiceProvider extends ServiceProvider
 {
     /**
      * Indicates if loading of the provider is deferred.
@@ -19,7 +20,8 @@ class ServiceProvider extends LaravelServiceProvider
      * @var array
      */
     protected $commands = [
-        GenerateCommand::class,
+        GenerateHintsCommand::class,
+        GenerateRepositoryCommand::class,
     ];
 
     /**

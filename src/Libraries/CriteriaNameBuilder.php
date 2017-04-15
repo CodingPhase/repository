@@ -1,6 +1,6 @@
 <?php
 
-namespace Deseco\Repositories\Builders;
+namespace Deseco\Repositories\Libraries;
 
 /**
  * Class CriteriaNameBuilder

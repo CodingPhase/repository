@@ -1,13 +1,13 @@
 <?php
 
-namespace Deseco\Repositories\Eloquent\Criteria;
+namespace Deseco\Repositories\Eloquent;
 
 use Deseco\Repositories\Contracts\CriteriaInterface;
 use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Criteria
- * @package Deseco\Repositories\Eloquent\Criteria
+ * @package Deseco\Repositories\Eloquent
  */
 abstract class Criteria implements CriteriaInterface
 {

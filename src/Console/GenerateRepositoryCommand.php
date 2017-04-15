@@ -14,12 +14,12 @@ class GenerateCommand extends Command
     /**
      * @var string
      */
-    protected $signature = 'repo:hints';
+    protected $signature = 'repository:hints';
 
     /**
      * @var string
      */
-    protected $description = 'Generate hints for repositories';
+    protected $description = 'Generate facade hints for repositories';
 
     /**
      * @var \Deseco\Repositories\Hints\Generator

@@ -1,0 +1,13 @@
+<?php
+
+namespace {namespace}
+
+use Deseco\Repositories\Factories\RepositoryFactory;
+
+/**
+ * Class {class}
+ */
+class {class} extends RepositoryFactory
+{
+    {output}
+}
