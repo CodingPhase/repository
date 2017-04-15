@@ -5,6 +5,10 @@ namespace Deseco\Repositories\Filters;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 
+/**
+ * Class QueryFilters
+ * @package Deseco\Repositories\Filters
+ */
 abstract class QueryFilters
 {
     /**

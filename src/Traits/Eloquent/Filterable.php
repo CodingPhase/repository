@@ -5,6 +5,10 @@ namespace Deseco\Repositories\Traits\Eloquent;
 use Deseco\Repositories\Filters\QueryFilters;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Class Filterable
+ * @package Deseco\Repositories\Traits\Eloquent
+ */
 trait Filterable
 {
     /**

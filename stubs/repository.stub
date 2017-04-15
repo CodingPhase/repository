@@ -1,1 +1,16 @@
 <?php
+
+namespace {namespace};
+
+use Deseco\Repositories\Eloquent\Repository;
+
+class {class} extends Repository
+{
+    /**
+     * @return mixed
+     */
+    public function model()
+    {
+        // return Model::class;
+    }
+}

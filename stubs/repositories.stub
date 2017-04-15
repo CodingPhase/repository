@@ -1,6 +1,6 @@
 <?php
 
-namespace {namespace}
+namespace {namespace};
 
 use Deseco\Repositories\Factories\RepositoryFactory;
 
