@@ -16,22 +16,16 @@ return [
     'suffix' => 'Repository',
 
     /*
-  |--------------------------------------------------------------------------
-  | Facade name. (Hints)
-  |--------------------------------------------------------------------------
-  */
-    'facade' => 'Repo',
+   |--------------------------------------------------------------------------
+   | Path to repositories
+   |--------------------------------------------------------------------------
+   */
+    'path' => 'app/Repositories/',
 
     /*
    |--------------------------------------------------------------------------
-   | Aliases
+   | Repositories class
    |--------------------------------------------------------------------------
-   |
-   | Here you can register aliases which will have a priority before auto
-   | building name. Just specify alias and class name without namespace and suffix
-   |
    */
-    'aliases' => [
-        //
-    ]
+    'class' => 'Repositories',
 ];

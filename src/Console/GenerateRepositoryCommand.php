@@ -2,41 +2,36 @@
 
 namespace Deseco\Repositories\Console;
 
-use Deseco\Repositories\Hints\Generator;
+use Deseco\Repositories\Generators\RepositoryGenerator;
 use Illuminate\Console\Command;
 
 /**
  * Class GenerateCommand
  * @package Deseco\Repositories\Console
  */
-class GenerateCommand extends Command
+class GenerateRepositoryCommand extends Command
 {
     /**
      * @var string
      */
-    protected $signature = 'repository:hints';
+    protected $signature = 'repository:make';
 
     /**
      * @var string
      */
-    protected $description = 'Generate facade hints for repositories';
+    protected $description = 'Generate repository';
 
     /**
-     * @var \Deseco\Repositories\Hints\Generator
+     * @var \Deseco\Repositories\Generators\RepositoryGenerator
      */
     protected $generator;
 
     /**
-     * @var string
-     */
-    protected $filename = '_repo_hints.php';
-
-    /**
      * GenerateCommand constructor.
      *
-     * @param \Deseco\Repositories\Hints\Generator $generator
+     * @param \Deseco\Repositories\Generators\RepositoryGenerator $generator
      */
-    public function __construct(Generator $generator)
+    public function __construct(RepositoryGenerator $generator)
     {
         parent::__construct();
 
@@ -48,7 +43,11 @@ class GenerateCommand extends Command
      */
     public function handle()
     {
+        $name = $this->ask('Enter repository name:');
+        $alias = $this->ask('Enter alias name', lcfirst($name));
         $this->generator->setCommand($this);
-        $this->generator->make(base_path($this->filename));
+        $this->generator->setName($name);
+        $this->generator->setAlias($alias);
+        $this->generator->make();
     }
 }

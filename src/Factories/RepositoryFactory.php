@@ -3,7 +3,7 @@
 namespace Deseco\Repositories\Factories;
 
 use Deseco\Repositories\Exceptions\RepositoryClassNotExistsException;
-use Illuminate\Config\Repository as Config;
+use Deseco\Repositories\Libraries\RepositoryConfig;
 use Illuminate\Container\Container as App;
 
 /**
@@ -19,24 +19,14 @@ class RepositoryFactory
     protected $app;
 
     /**
-     * @var \Illuminate\Config\Repository
+     * @var \Deseco\Repositories\Libraries\RepositoryConfig
      */
     protected $config;
 
     /**
-     * @var string
+     * @var array
      */
-    protected $namespace;
-
-    /**
-     * @var string
-     */
-    protected $suffix;
-
-    /**
- * @var array
- */
-    protected $aliases;
+    protected $repositories = [];
 
     /**
      * @var string
@@ -44,19 +34,27 @@ class RepositoryFactory
     protected $name;
 
     /**
+     * @var array
+     */
+    protected $excludedProperties = ['app', 'config', 'name', 'repositories', 'excludedProperties'];
+
+    /**
      * RepositoryService constructor.
      *
      * @param \Illuminate\Container\Container $app
-     * @param \Illuminate\Config\Repository $config
+     * @param \Deseco\Repositories\Libraries\RepositoryConfig $config
      */
-    public function __construct(App $app, Config $config)
+    public function __construct(App $app, RepositoryConfig $config)
     {
         $this->app = $app;
         $this->config = $config;
 
-        $this->namespace = $this->config->get('repositories.namespace');
-        $this->suffix = $this->config->get('repositories.suffix');
-        $this->aliases = $this->config->get('repositories.aliases');
+        foreach (get_object_vars($this) as $property => $value) {
+            if (! in_array($property, $this->excludedProperties)) {
+                $this->repositories[$property] = $value;
+                unset($this->{$property});
+            }
+        }
     }
 
     /**
@@ -66,20 +64,7 @@ class RepositoryFactory
      */
     public function __get($property)
     {
-        $this->name = $property;
-
-        return $this->buildRepository();
-    }
-
-    /**
-     * @param $method
-     * @param $args
-     *
-     * @return mixed
-     */
-    public function __call($method, $args)
-    {
-        $this->name = $method;
+        $this->name = $this->repositories[$property];
 
         return $this->buildRepository();
     }
@@ -88,12 +73,8 @@ class RepositoryFactory
      * @return mixed
      * @throws \Deseco\Repositories\Exceptions\RepositoryClassNotExistsException
      */
-    protected function buildRepository()
+    private function buildRepository()
     {
-        if (array_key_exists($this->name, $this->aliases)) {
-            $this->name = $this->aliases[$this->name];
-        }
-
         try {
             return $this->app->make($this->buildName());
         } catch (\ReflectionException $e) {
@@ -104,8 +85,11 @@ class RepositoryFactory
     /**
      * @return string
      */
-    protected function buildName()
+    private function buildName()
     {
-        return $this->namespace . ucfirst($this->name) . $this->suffix;
+        return join('', [
+            $this->config->namespace,
+            ucfirst($this->name . $this->config->suffix)
+        ]);
     }
 }

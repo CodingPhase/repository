@@ -2,15 +2,14 @@
 
 namespace Deseco\Repositories\Eloquent;
 
-use Deseco\Repositories\Builders\CriteriaNameBuilder;
 use Deseco\Repositories\Contracts\CriteriaInterface;
 use Deseco\Repositories\Contracts\RepositoryInterface;
-use Deseco\Repositories\Eloquent\Criteria\Criteria;
 use Deseco\Repositories\Exceptions\RepositoryException;
 use Deseco\Repositories\Exceptions\RepositoryInvalidMethodException;
 use Deseco\Repositories\Exceptions\RepositoryMatchArgumentException;
 use Deseco\Repositories\Exceptions\RepositoryMethodNotExistsException;
 use Deseco\Repositories\Filters\QueryFilters;
+use Deseco\Repositories\Libraries\CriteriaNameBuilder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Container\Container as App;
 

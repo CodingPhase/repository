@@ -4,10 +4,22 @@ namespace Deseco\Repositories\Traits\Fractal;
 
 use Illuminate\Http\Request;
 
+/**
+ * Class InteractsWithFractal
+ * @package Deseco\Repositories\Traits\Fractal
+ */
 trait InteractsWithFractal
 {
+    /**
+     * @return mixed
+     */
     abstract function map();
 
+    /**
+     * @param $filters
+     *
+     * @return array
+     */
     public function transform($filters)
     {
         $data = [];
@@ -25,6 +37,9 @@ trait InteractsWithFractal
         return $data;
     }
 
+    /**
+     * @return array
+     */
     public function filters()
     {
         if($this->request instanceof Request) {

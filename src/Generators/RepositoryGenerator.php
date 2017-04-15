@@ -2,15 +2,15 @@
 
 namespace Deseco\Repositories\Generators;
 
-use Deseco\Repositories\Builders\FactoryMethodNameBuilder;
-use Deseco\Repositories\Builders\RepositoryNameBuilder;
+use Deseco\Repositories\Libraries\FactoryMethodNameBuilder;
+use Deseco\Repositories\Libraries\RepositoryConfig;
 use Illuminate\Filesystem\Filesystem;
 
 /**
- * Class Generator
- * @package Deseco\Repositories\Hints
+ * Class RepositoryGenerator
+ * @package Deseco\Repositories\Generators
  */
-class HintsGenerator
+class RepositoryGenerator
 {
     /**
      * @var \Illuminate\Config\Repository
@@ -28,41 +28,61 @@ class HintsGenerator
     protected $command;
 
     /**
+     * @var
+     */
+    protected $name;
+
+    /**
+     * @var
+     */
+    protected $alias;
+
+    /**
+     * @var array
+     */
+    protected $headers = ['Class', 'Repository', 'Property', 'Status'];
+
+    /**
+     * @var array
+     */
+    protected $data = [];
+
+    /**
      * Generator constructor.
      *
      * @param \Illuminate\Filesystem\Filesystem $filesystem
+     * @param \Deseco\Repositories\Libraries\RepositoryConfig $config
      */
-    public function __construct(Filesystem $filesystem)
+    public function __construct(Filesystem $filesystem, RepositoryConfig $config)
     {
         $this->filesystem = $filesystem;
-
-        foreach (config('repositories') as $setting => $value) {
-            $this->config[$setting] = $value;
-        }
+        $this->config = $config;
+        $this->stubs = (object) [
+            'repositories' => $filesystem->get(__DIR__ . '/../../stubs/repositories.stub'),
+            'repository' => $filesystem->get(__DIR__ . '/../../stubs/repository.stub'),
+        ];
     }
 
     /**
-     * @param $filename
+     * @return void
      */
-    public function make($filename)
+    public function make()
     {
-        $this->command->info('Started generating hints...');
+        $this->command->info('Generating repository...');
         $this->command->info('');
 
-        $this->deleteFileIfExists($filename);
+        $this->createRepositoryClass();
+        $this->addData($this->getRepositoryName());
 
-        $file = $this->filesystem->get(__DIR__ . '/../../stubs/facade.stub');
-
-        $data = [
-            '{facade}' => $this->config['facade'],
-            '{output}' => $this->generateMethods(),
-        ];
-
-        foreach ($data as $string => $value) {
-            $file = str_replace($string, $value, $file);
+        if (! $this->isRepositoriesClassExists()) {
+            $this->createRepositoriesClass();
+            $this->addData($this->getRepositoriesName(), $this->getRepositoryName(), $this->getAliasName());
+        } else {
+            $this->updateRepositoriesClass();
+            $this->addData($this->getRepositoriesName(), $this->getRepositoryName(), $this->getAliasName(), 'Updated');
         }
 
-        $this->filesystem->put($filename, $file);
+        $this->command->table($this->headers, $this->data);
         $this->command->info('');
         $this->command->info('Done!');
     }
@@ -76,70 +96,160 @@ class HintsGenerator
     }
 
     /**
-     * @param $filename
+     * @param $name
      */
-    protected function deleteFileIfExists($filename)
+    public function setName($name)
     {
-        if ($this->filesystem->exists($filename)) {
-            $this->filesystem->delete($filename);
-        }
+       $this->name = $name;
     }
 
     /**
-     * @return array
+     * @param $alias
      */
-    protected function getMethods()
+    public function setAlias($alias)
     {
-        $methods = [];
-
-        foreach ($this->config['aliases'] as $method => $repository) {
-            $namespace = $this->config['namespace'] . $repository . $this->config['suffix'];
-            $methods[$method] = $namespace;
-            $this->command->info("Created method {$method} for repository {$namespace}");
-        }
-
-        foreach ($this->globRepositories() as $repositoryPath) {
-            $repositoryNameBuilder = new RepositoryNameBuilder($repositoryPath);
-
-            if (in_array($repositoryNameBuilder->getNamespace(), $methods)) {
-                continue;
-            }
-
-            $methods[$repositoryNameBuilder->getFactoryMethod()] = $repositoryNameBuilder->getNamespace();
-            $this->command->info("Created method {$repositoryNameBuilder->getFactoryMethod()} for repository {$repositoryNameBuilder->getNamespace()}");
-        }
-
-        return $methods;
+        $this->alias = $alias;
     }
 
     /**
-     * @return array
+     * @return void
      */
-    protected function globRepositories()
+    protected function createRepositoryClass()
     {
-        $namespaceParts = explode('\\', $this->config['namespace']);
-        array_shift($namespaceParts);
+        $this->filesystem->put(
+            $this->getRepositoryFilePath(),
+            str_replace(
+                ['{namespace}', '{class}'],
+                [$this->getRepositoriesNamespace(), $this->getRepositoryName()],
+                $this->stubs->repository
+            )
+        );
+    }
 
-        return $this->filesystem->files(app_path(implode(DIRECTORY_SEPARATOR, array_filter($namespaceParts))));
+    /**
+     * @return void
+     */
+    protected function createRepositoriesClass()
+    {
+        $this->filesystem->put(
+            $this->getRepositoriesFilePath(),
+            str_replace(
+                ['{namespace}', '{class}', '{output}'],
+                [$this->getRepositoriesNamespace(), $this->getRepositoriesName(), $this->generateProperty()],
+                $this->stubs->repositories
+            )
+        );
+
+    }
+
+    /**
+     * return @void
+     */
+    protected function updateRepositoriesClass()
+    {
+        $content = $this->filesystem->get($this->getRepositoriesFilePath());
+
+        $this->filesystem->put(
+            $this->getRepositoriesFilePath(),
+            $this->generateProperty(substr($content, 0, strrpos(trim($content), "\n")))
+        );
     }
 
     /**
      * @return string
      */
-    protected function generateMethods()
+    protected function getRepositoryFilePath()
     {
-        $output = '';
-        $counter = 0;
+        return $this->config->path . $this->getRepositoryName() . '.php';
+    }
 
-        foreach ($this->getMethods() as $method => $value) {
-            if ($counter !== 0) {
-                $output .= "\n\n\t";
-            }
+    /**
+     * @return string
+     */
+    protected function getRepositoriesFilePath()
+    {
+        return $this->config->path . $this->config->class . '.php';
+    }
 
-            $output .= "/**\n\t * @return {$value}\n\t */\n\tpublic static function {$method}() { return new {$value}; }";
-            $counter++;
+    /**
+     * @return string
+     */
+    protected function getRepositoryName()
+    {
+        return $this->name . $this->config->suffix;
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getRepositoriesName()
+    {
+        return $this->config->class;
+    }
+
+    /**
+     * @return string
+     */
+    protected function getRepositoriesNamespace()
+    {
+        return substr($this->config->namespace, 0, -1);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getPropertyName()
+    {
+        return lcfirst($this->name);
+    }
+
+    /**
+     * @return mixed
+     */
+    protected function getAliasName()
+    {
+        return $this->alias;
+    }
+
+    /**
+     * @param bool $content
+     *
+     * @return string
+     */
+    protected function generateProperty($content = false)
+    {
+        $repositoryClass = $this->getRepositoryName();
+        $propertyName = $this->getAliasName();
+        $propertyValue = $this->getPropertyName();
+
+        if ($content) {
+            return $content . "\t\n\n\t/**\n\t * @var {$repositoryClass}\n\t */\n\tpublic \${$propertyName} = '{$propertyValue}';\n}\n";
         }
 
-        return $output;
+        return "/**\n\t * @var {$repositoryClass}\n\t */\n\tpublic \${$propertyName} = '{$propertyValue}';";
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isRepositoriesClassExists()
+    {
+        return $this->filesystem->exists($this->getRepositoriesFilePath());
+    }
+
+    /**
+     * @param $repository
+     * @param string $property
+     * @param string $alias
+     * @param string $status
+     */
+    protected function addData($repository, $property = '-', $alias = '-', $status = 'Created')
+    {
+        $this->data[] = [
+            'repository' => $repository,
+            'property' => $property,
+            'alias' => $alias,
+            'status' => $status
+        ];
     }
 }

@@ -2,7 +2,6 @@
 
 namespace Deseco\Repositories;
 
-use Deseco\Repositories\Console\GenerateHintsCommand;
 use Deseco\Repositories\Console\GenerateRepositoryCommand;
 use Deseco\Repositories\Factories\RepositoryFactory;
 use Illuminate\Support\ServiceProvider;
@@ -20,7 +19,6 @@ class RepositoriesServiceProvider extends ServiceProvider
      * @var array
      */
     protected $commands = [
-        GenerateHintsCommand::class,
         GenerateRepositoryCommand::class,
     ];
 
