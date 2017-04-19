@@ -4,6 +4,7 @@ namespace Deseco\Repositories;
 
 use Deseco\Repositories\Console\GenerateRepositoryCommand;
 use Deseco\Repositories\Factories\RepositoryFactory;
+use Deseco\Repositories\Libraries\RepositoryConfig;
 use Illuminate\Support\ServiceProvider;
 
 class RepositoriesServiceProvider extends ServiceProvider
@@ -39,8 +40,12 @@ class RepositoriesServiceProvider extends ServiceProvider
      */
     public function register()
     {
+
         $this->app->bind('deseco.repository', function () {
-            return new RepositoryFactory($this->app, $this->app['config']);
+            return new RepositoryFactory(
+                $this->app,
+                new RepositoryConfig($this->app)
+            );
         });
 
         $this->commands($this->commands);
