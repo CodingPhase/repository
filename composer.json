@@ -11,7 +11,14 @@
     ],
     "require": {
         "php": ">=5.5.9",
-        "illuminate/support": "5.1.x|5.2.x|5.3.*|5.4.*"
+        "illuminate/support": "~5.0"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Deseco\\Repositories\\RepositoriesServiceProvider"
+            ]
+        }
     },
     "autoload": {
         "psr-4": {
